@@ -1,0 +1,3 @@
+form-log/*
+!form-log/.htaccess
+.netlify

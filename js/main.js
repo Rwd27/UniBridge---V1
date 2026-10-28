@@ -170,18 +170,19 @@
     $$("a", toast).forEach(function (a) { a.addEventListener("click", function () { toast.classList.remove("on"); try { sessionStorage.setItem("ub-toast", "1"); } catch (e) {} }); });
   }
 
-  /* Forms: Netlify Forms when published, friendly message when opened from a file */
+  /* Forms: sent to send.php (emails info@unibridge.ae); friendly message when opened from a file */
   var isFile = location.protocol === "file:";
-  $$("form[data-netlify]").forEach(function (form) {
+  $$("form[data-form]").forEach(function (form) {
     var note = $(".notice", form);
     var say = function (msg) { if (note) { note.textContent = msg; note.hidden = false; } };
+    var tsf = form.querySelector("input[name=ts]"); if (tsf) tsf.value = Date.now();
     form.addEventListener("submit", function (e) {
       if (isFile) { e.preventDefault(); say("Preview mode: forms switch on once the site is published. For now, please email info@unibridge.ae or call +971 50 753 5875."); return; }
       if (!w.fetch) return;
       e.preventDefault();
       var btn = $("button[type=submit]", form); if (btn) { btn.disabled = true; btn.dataset.l = btn.textContent; btn.textContent = "Sending…"; }
-      fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(form)).toString() })
-        .then(function (r) { if (!r.ok) throw 0; form.reset(); if (btn) { btn.disabled = false; btn.textContent = btn.dataset.l; } say("Thank you. We have your details and will be in touch soon."); })
+      fetch("send.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" }, body: new URLSearchParams(new FormData(form)).toString() })
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) { if (!d || !d.ok) throw 0; form.reset(); if (btn) { btn.disabled = false; btn.textContent = btn.dataset.l; } say("Thank you. We have your details and will be in touch soon."); })
         .catch(function () { if (btn) { btn.disabled = false; btn.textContent = btn.dataset.l || "Send"; } say("Sorry, that did not send. Please try again or email info@unibridge.ae."); });
     });
   });
